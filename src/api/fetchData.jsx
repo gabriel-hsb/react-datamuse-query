@@ -34,6 +34,7 @@ const useFetchData = () => {
         error,
         response,
         request,
+        setError,
     };
 };
 
