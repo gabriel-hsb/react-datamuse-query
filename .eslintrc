@@ -4,6 +4,7 @@
   ],
   "rules": {
     "no-shadow": "off",
-    "no-console": "warn"
+    "no-console": "warn",
+    "eslint-plugin-vue/html-button-has-type": "off"
   }
 }

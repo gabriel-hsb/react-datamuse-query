@@ -1,36 +1,24 @@
-import { useState } from 'react';
-import { fetchOptions, BASE_URL } from './api/api.js';
+import { useSearchParams } from 'react-router-dom';
+import { fetchOptions } from './api/api.js';
+import useFetchData from './api/fetchData.jsx';
 
 function App() {
-    const [searchedWord, setSearchedWord] = useState('');
-    const [fetchOption, setFetchOption] = useState('');
-    const [response, setResponse] = useState(undefined);
+    const [searchParams, setSearchParams] = useSearchParams({
+        word: '',
+        option: '',
+    });
 
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(false);
+    const searchedWord = searchParams.get('word');
+    const wordOption = searchParams.get('option');
 
-    const fetchData = async (e) => {
+    const { isLoading, error, response, request } = useFetchData({
+        searchedWord,
+        wordOption,
+    });
+
+    const handleSubmit = (e) => {
         e.preventDefault();
-        setIsLoading(true);
-
-        if (searchedWord.length < 1) alert('Please type a longer word');
-
-        try {
-            const res = await fetch(
-                `${BASE_URL}/words?${fetchOption}=${searchedWord}`,
-            );
-            const json = await res.json();
-            setResponse(json);
-
-            if (json.length === 0) {
-                alert('Word not found.\n Please try again');
-            }
-        } catch (e) {
-            console.error(`Erro: ${e}`);
-            setError(true);
-        } finally {
-            setIsLoading(false);
-        }
+        request({ wordOption, searchedWord });
     };
 
     return (
@@ -39,35 +27,41 @@ function App() {
                 <h1 className="font-sans text-4xl">Datamuse API</h1>
                 <p> A word-finding query engine </p>
             </div>
-            <form onSubmit={(e) => fetchData(e)}>
+            <form onSubmit={(e) => handleSubmit(e)}>
                 <input
+                    minLength={2}
                     required
                     value={searchedWord}
                     className="bg-gray-500 rounded-none"
                     type="text"
-                    onChange={({ target }) => setSearchedWord(target.value)}
+                    onChange={(e) =>
+                        setSearchParams((prev) => {
+                            prev.set('word', e.target.value);
+                            return prev;
+                        })
+                    }
                 />
-                <p>Word State:{searchedWord}</p>
 
                 {Object.values(fetchOptions).map(({ description, key }) => (
                     <div key={key}>
                         <input
-                            minLength={2}
                             required
                             type="radio"
                             value={key}
                             name="fetchOptions"
                             id={key}
-                            onChange={({ target }) =>
-                                setFetchOption(target.value)
+                            onChange={(e) =>
+                                setSearchParams((prev) => {
+                                    prev.set('option', e.target.value);
+                                    return prev;
+                                })
                             }
-                            checked={fetchOption === key}
+                            checked={wordOption === key}
                         />
                         <label htmlFor={key}>{description}</label>
                     </div>
                 ))}
 
-                <p>Selected Radio Input = {fetchOption}</p>
                 <button
                     type="submit"
                     disabled={isLoading || error}
@@ -76,6 +70,9 @@ function App() {
                     {isLoading ? 'Loading...' : 'Fetch Data'}
                 </button>
             </form>
+
+            {error && error}
+
             {response && (
                 <ul>
                     {response.map((res, idx) => (
