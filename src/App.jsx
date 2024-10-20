@@ -21,7 +21,6 @@ function App() {
             );
             const json = await res.json();
             setResponse(json);
-            console.log(json);
 
             if (json.length === 0) {
                 alert('Word not found.\n Please try again');
@@ -42,6 +41,7 @@ function App() {
             </div>
             <form onSubmit={(e) => fetchData(e)}>
                 <input
+                    required
                     value={searchedWord}
                     className="bg-gray-500 rounded-none"
                     type="text"
@@ -49,19 +49,21 @@ function App() {
                 />
                 <p>Word State:{searchedWord}</p>
 
-                {Object.values(fetchOptions).map((option) => (
-                    <div key={option.key}>
+                {Object.values(fetchOptions).map(({ description, key }) => (
+                    <div key={key}>
                         <input
+                            minLength={2}
+                            required
                             type="radio"
-                            value={option.key}
+                            value={key}
                             name="fetchOptions"
-                            id={option.key}
+                            id={key}
                             onChange={({ target }) =>
                                 setFetchOption(target.value)
                             }
-                            checked={fetchOption === option.key}
+                            checked={fetchOption === key}
                         />
-                        <label htmlFor={option.key}>{option.description}</label>
+                        <label htmlFor={key}>{description}</label>
                     </div>
                 ))}
 
