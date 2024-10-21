@@ -51,8 +51,10 @@ function App() {
   useEffect(() => {
     if (searchedWord && wordOption) {
       request({ wordOption, searchedWord });
+      setFetchedOptionDisplay(fetchedOptionTempDisplay);
+      setSearchedWordDisplay(searchedWord);
     }
-  }, [searchedWord, wordOption, request]);
+  }, [searchedWord, wordOption, fetchedOptionTempDisplay, request]);
 
   const handleReset = () => {
     setError(false);
