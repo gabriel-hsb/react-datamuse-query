@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchOptions } from './api/api.js';
 
 import Button from './ui/Button.jsx';
@@ -9,66 +9,75 @@ import useFetchData from './api/fetchData.jsx';
 function App() {
   const navigate = useNavigate();
 
-  const [searchParams, setSearchParams] = useSearchParams({
-    word: '',
-    option: '',
-  });
-  const searchedWord = searchParams.get('word');
-  const wordOption = searchParams.get('option');
+  // states used to display fetched options and word on the UI
+  // const [fetchedOptionDisplay, setFetchedOptionDisplay] = useState('');
+  // const [fetchedOptionDescDisplay, setFetchedOptionDescDisplay] = useState('');
+  // const [searchedWordToDisplay, setSearchedWordToDisplay] = useState('');
 
-  const [fetchedOptionDisplay, setFetchedOptionDisplay] = useState('');
-  const [fetchedOptionTempDisplay, setFetchedOptionTempDisplay] = useState('');
+  const [searchedWord, setWord] = useState('');
+  const [wordOption, setOption] = useState('');
 
-  const [searchedWordDisplay, setSearchedWordDisplay] = useState('');
-
-  const { isLoading, error, response, request, setError } = useFetchData({
-    searchedWord,
-    wordOption,
-  });
+  const { isLoading, error, response, request, setError } = useFetchData();
 
   // *** END HOOKS DECLARATIONS ***
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    request({ wordOption, searchedWord });
-    setFetchedOptionDisplay(fetchedOptionTempDisplay);
-    setSearchedWordDisplay(searchedWord);
+
+    console.log(wordOption);
+    console.log(searchedWord);
+
+    await request({ wordOption, searchedWord });
+
+    console.log(response);
+
+    // setSearchParams(
+    //   (prev) => {
+    //     prev.set('option', fetchedOptionDisplay);
+    //     prev.set('word', searchedWordToDisplay);
+    //     return prev;
+    //   },
+    //   { replace: true },
+    // );
+
+    // updateTextToDisplay();
   };
 
-  const handleWordClick = (word) => {
-    setSearchParams(
-      (prev) => {
-        prev.set('word', word);
-        return prev;
-      },
-      { replace: true },
-    );
-    setSearchedWordDisplay(word);
-    setFetchedOptionDisplay(fetchedOptionTempDisplay);
-    setSearchedWordDisplay(searchedWord);
-  };
+  // const handleWordClick = (word) => {
+  //   // setSearchParams(
+  //   //   (prev) => {
+  //   //     prev.set('word', word);
+  //   //     return prev;
+  //   //   },
+  //   //   { replace: true },
+  //   // );
+  //   updateTextToDisplay();
+  //   request({ wordOption, searchedWord });
+  // };
 
-  useEffect(() => {
-    if (searchedWord && wordOption) {
-      request({ wordOption, searchedWord });
-      setFetchedOptionDisplay(fetchedOptionTempDisplay);
-      setSearchedWordDisplay(searchedWord);
-    }
-  }, [searchedWord, wordOption, fetchedOptionTempDisplay, request]);
+  // const updateTextToDisplay = useCallback(() => {
+  //   setFetchedOptionDisplay(fetchedOptionDescDisplay);
+  //   setSearchedWordToDisplay(searchedWord);
+  // }, [fetchedOptionDescDisplay, searchedWord]);
 
   const handleReset = () => {
     setError(false);
     navigate('/');
-    setSearchParams(
-      (prev) => {
-        prev.set('option', '');
-        prev.set('word', '');
-        return prev;
-      },
-      { replace: true },
-    );
-    setSearchedWordDisplay('');
+    // setSearchParams(
+    //   (prev) => {
+    //     prev.delete('option', '');
+    //     prev.delete('word', '');
+    //     return prev;
+    //   },
+    //   { replace: true },
+    // );
+    // resetTextToDisplay();
   };
+
+  // const resetTextToDisplay = () => {
+  //   setFetchedOptionDisplay('');
+  //   setSearchedWordToDisplay('');
+  // };
 
   return (
     <section className="p-5 max-w-[1200px] my-0 mx-auto min-h-screen flex flex-col items-center gap-6">
@@ -87,15 +96,7 @@ function App() {
             id="word"
             value={searchedWord}
             type="text"
-            onChange={(e) =>
-              setSearchParams(
-                (prev) => {
-                  prev.set('word', e.target.value);
-                  return prev;
-                },
-                { replace: true },
-              )
-            }
+            onChange={(e) => setWord(e.target.value)}
           />
         </div>
 
@@ -109,16 +110,9 @@ function App() {
                 value={key}
                 name="fetchOptions"
                 id={key}
-                onChange={(e) =>
-                  setSearchParams(
-                    (prev) => {
-                      prev.set('option', e.target.value);
-                      setFetchedOptionTempDisplay(description);
-                      return prev;
-                    },
-                    { replace: true },
-                  )
-                }
+                onChange={(e) => {
+                  setOption(e.target.value);
+                }}
                 checked={wordOption === key}
               />
               <label
@@ -130,19 +124,18 @@ function App() {
             </div>
           ))}
         </div>
-
-        <Button type="submit" disabled={isLoading || error}>
-          {error || (isLoading ? 'Loading...' : 'Search Words')}
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Loading...' : 'Search Words'}
         </Button>
       </form>
 
       {error && (
-        <>
+        <div>
           {error}
           <Button onClick={handleReset} type="button">
             Restart
           </Button>
-        </>
+        </div>
       )}
 
       {response && response.length > 0 && (
@@ -151,7 +144,7 @@ function App() {
             There are <b>{response.length}</b>{' '}
             {response.length > 1 ? 'words' : 'word'} that{' '}
             <b>
-              {fetchedOptionDisplay.toLowerCase()} {searchedWordDisplay}
+              {/* {fetchedOptionDisplay.toLowerCase()} {searchedWordToDisplay} */}
             </b>
           </p>
           <ul className="grid grid-cols-3 gap-x-12 text-start">
@@ -160,9 +153,7 @@ function App() {
                 className="cursor-pointer border-b max-w-full hover:border-blue-500"
                 key={idx}
               >
-                <button type="button" onClick={() => handleWordClick(res.word)}>
-                  {res.word}
-                </button>
+                <button type="button">{res.word}</button>
               </li>
             ))}
           </ul>
