@@ -6,7 +6,7 @@ const useFetchData = () => {
   const [error, setError] = useState(null);
   const [response, setResponse] = useState(null);
 
-  const request = useCallback(async ({ wordOption, searchedWord }) => {
+  const request = useCallback(async ( wordOption, searchedWord ) => {
     setIsLoading(true);
     let res;
     let json;

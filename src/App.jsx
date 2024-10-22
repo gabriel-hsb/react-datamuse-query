@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { fetchOptions } from './api/api.js';
 
 import Button from './ui/Button.jsx';
@@ -8,58 +8,71 @@ import useFetchData from './api/fetchData.jsx';
 
 function App() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams({
+    word: '',
+    option: '',
+  });
 
-  // states used to display fetched options and word on the UI
-  // const [fetchedOptionDisplay, setFetchedOptionDisplay] = useState('');
-  // const [fetchedOptionDescDisplay, setFetchedOptionDescDisplay] = useState('');
-  // const [searchedWordToDisplay, setSearchedWordToDisplay] = useState('');
-
-  const [searchedWord, setWord] = useState('');
-  const [wordOption, setOption] = useState('');
-
+  
+  const [searchedWord, setSearchedWord] = useState('');
+  const [wordOption, setWordOption] = useState('');
+  
   const { isLoading, error, response, request, setError } = useFetchData();
+  const lastFetchedValues = useRef({wordOption, searchedWord})
 
   // *** END HOOKS DECLARATIONS ***
 
-  const handleFormSubmit = async (e) => {
+  const handleFormSubmit = (e) => {
     e.preventDefault();
 
-    console.log(wordOption);
-    console.log(searchedWord);
+    // compares if last searched word is the same
+    // as the current word user wants to search
+    if (
+      lastFetchedValues.current.wordOption === wordOption &&
+      lastFetchedValues.current.searchedWord === searchedWord
+    ) {
+      alert("Word already searched. Not Fetched.");
+      return;
+    }
 
-    await request({ wordOption, searchedWord });
+    lastFetchedValues.current = { wordOption, searchedWord };
 
-    console.log(response);
-
-    // setSearchParams(
-    //   (prev) => {
-    //     prev.set('option', fetchedOptionDisplay);
-    //     prev.set('word', searchedWordToDisplay);
-    //     return prev;
-    //   },
-    //   { replace: true },
-    // );
-
-    // updateTextToDisplay();
+    fetchData()
   };
 
-  // const handleWordClick = (word) => {
-  //   // setSearchParams(
-  //   //   (prev) => {
-  //   //     prev.set('word', word);
-  //   //     return prev;
-  //   //   },
-  //   //   { replace: true },
-  //   // );
-  //   updateTextToDisplay();
-  //   request({ wordOption, searchedWord });
-  // };
+  const fetchData = () => {
+    setSearchParams(
+      (prev) => {
+        prev.set('option', wordOption);
+        prev.set('word', searchedWord);
+        return prev;
+      },
+      { replace: true },
+    );
 
-  // const updateTextToDisplay = useCallback(() => {
-  //   setFetchedOptionDisplay(fetchedOptionDescDisplay);
-  //   setSearchedWordToDisplay(searchedWord);
-  // }, [fetchedOptionDescDisplay, searchedWord]);
+    request( wordOption, searchedWord );
+  }
+  
+  useEffect(() => {
+    const searchParamsWord = searchParams.get('word')
+    const searchParamsOption = searchParams.get('option')
+    
+    if(searchParamsWord && searchParamsOption) {
+      setSearchedWord(searchParamsWord)
+      setWordOption(searchParamsOption)
+      request( searchParamsOption, searchParamsWord );
+    }
+  }, [])
 
+  const handleWordClick = (clickedWord) => {
+    setSearchedWord(clickedWord)
+
+    setTimeout(() => {
+      fetchData()
+    }, 200);
+  }
+
+  //TODO: handle Reset funcion
   const handleReset = () => {
     setError(false);
     navigate('/');
@@ -71,13 +84,7 @@ function App() {
     //   },
     //   { replace: true },
     // );
-    // resetTextToDisplay();
   };
-
-  // const resetTextToDisplay = () => {
-  //   setFetchedOptionDisplay('');
-  //   setSearchedWordToDisplay('');
-  // };
 
   return (
     <section className="p-5 max-w-[1200px] my-0 mx-auto min-h-screen flex flex-col items-center gap-6">
@@ -96,7 +103,7 @@ function App() {
             id="word"
             value={searchedWord}
             type="text"
-            onChange={(e) => setWord(e.target.value)}
+            onChange={(e) => setSearchedWord(e.target.value)}
           />
         </div>
 
@@ -111,7 +118,7 @@ function App() {
                 name="fetchOptions"
                 id={key}
                 onChange={(e) => {
-                  setOption(e.target.value);
+                  setWordOption(e.target.value);
                 }}
                 checked={wordOption === key}
               />
@@ -129,14 +136,17 @@ function App() {
         </Button>
       </form>
 
-      {error && (
-        <div>
-          {error}
-          <Button onClick={handleReset} type="button">
-            Restart
-          </Button>
-        </div>
-      )}
+          
+      {/*
+        {error && (
+          <div>
+            {error}
+            <Button onClick={handleReset} type="button">
+              Restart
+            </Button>
+          </div>
+        )}    
+      */}
 
       {response && response.length > 0 && (
         <div>
@@ -153,7 +163,7 @@ function App() {
                 className="cursor-pointer border-b max-w-full hover:border-blue-500"
                 key={idx}
               >
-                <button type="button">{res.word}</button>
+                <button type="button" onClick={() => handleWordClick(res.word)}>{res.word}</button>
               </li>
             ))}
           </ul>
