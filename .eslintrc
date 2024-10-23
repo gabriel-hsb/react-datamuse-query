@@ -3,8 +3,8 @@
     "wesbos"
   ],
   "rules": {
+    "react/prop-types": 0,
     "no-shadow": "off",
-    // "no-console": "warn",
     "eslint-plugin-vue/html-button-has-type": "off",
     "max-len": [
       "error",
