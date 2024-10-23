@@ -1,6 +1,3 @@
-/* eslint-disable react/button-has-type */
-import PropTypes from 'prop-types';
-
 const Button = ({ type, children, ...restProps }) => (
   <button
     {...restProps}
@@ -10,10 +7,5 @@ const Button = ({ type, children, ...restProps }) => (
     {children}
   </button>
 );
-
-Button.propTypes = {
-  type: PropTypes.oneOf(['button', 'submit', 'reset']).isRequired,
-  children: PropTypes.node.isRequired,
-};
 
 export default Button;
