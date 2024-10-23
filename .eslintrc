@@ -5,6 +5,12 @@
   "rules": {
     "no-shadow": "off",
     // "no-console": "warn",
-    "eslint-plugin-vue/html-button-has-type": "off"
+    "eslint-plugin-vue/html-button-has-type": "off",
+    "max-len": [
+      "error",
+      {
+        "code": 120
+      }
+    ]
   }
 }

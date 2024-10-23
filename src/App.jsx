@@ -9,18 +9,30 @@ import useFetchData from './api/fetchData.jsx';
 function App() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams({
-    word: '',
     option: '',
+    word: '',
   });
 
-  
   const [searchedWord, setSearchedWord] = useState('');
   const [wordOption, setWordOption] = useState('');
-  
-  const { isLoading, error, response, request, setError } = useFetchData();
-  const lastFetchedValues = useRef({wordOption, searchedWord})
+
+  const { isLoading, error, fetchedWords, request, setError } = useFetchData();
+  const lastFetchedValues = useRef({ wordOption, searchedWord });
 
   // *** END HOOKS DECLARATIONS ***
+
+  // on page refresh, gets url params and fetchs again
+  useEffect(() => {
+    const searchParamsWord = searchParams.get('word');
+    const searchParamsOption = searchParams.get('option');
+
+    if (searchParamsWord && searchParamsOption) {
+      setSearchedWord(searchParamsWord);
+      setWordOption(searchParamsOption);
+      request(searchParamsOption, searchParamsWord);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
@@ -31,59 +43,59 @@ function App() {
       lastFetchedValues.current.wordOption === wordOption &&
       lastFetchedValues.current.searchedWord === searchedWord
     ) {
-      alert("Word already searched. Not Fetched.");
+      alert('Word already searched. Not Fetched.');
       return;
     }
 
     lastFetchedValues.current = { wordOption, searchedWord };
 
-    fetchData()
+    fetchData(wordOption, searchedWord);
   };
 
-  const fetchData = () => {
+  const fetchData = (option, word) => {
     setSearchParams(
       (prev) => {
-        prev.set('option', wordOption);
-        prev.set('word', searchedWord);
+        prev.set('option', option);
+        prev.set('word', word);
         return prev;
       },
       { replace: true },
     );
 
-    request( wordOption, searchedWord );
-  }
-  
-  useEffect(() => {
-    const searchParamsWord = searchParams.get('word')
-    const searchParamsOption = searchParams.get('option')
-    
-    if(searchParamsWord && searchParamsOption) {
-      setSearchedWord(searchParamsWord)
-      setWordOption(searchParamsOption)
-      request( searchParamsOption, searchParamsWord );
-    }
-  }, [])
+    setWordOption(option);
+    setSearchedWord(word);
+
+    request(option, word);
+  };
 
   const handleWordClick = (clickedWord) => {
-    setSearchedWord(clickedWord)
+    setSearchParams(
+      (prev) => {
+        prev.set('option', wordOption);
+        prev.set('word', clickedWord);
+        return prev;
+      },
+      { replace: true },
+    );
 
-    setTimeout(() => {
-      fetchData()
-    }, 200);
-  }
+    fetchData(searchParams.get('option'), clickedWord);
+  };
 
-  //TODO: handle Reset funcion
   const handleReset = () => {
-    setError(false);
+    setError(null);
+
+    setWordOption('');
+    setSearchedWord('');
+
     navigate('/');
-    // setSearchParams(
-    //   (prev) => {
-    //     prev.delete('option', '');
-    //     prev.delete('word', '');
-    //     return prev;
-    //   },
-    //   { replace: true },
-    // );
+    setSearchParams(
+      (prev) => {
+        prev.delete('option');
+        prev.delete('word');
+        return prev;
+      },
+      { replace: true },
+    );
   };
 
   return (
@@ -97,7 +109,7 @@ function App() {
         <div className="flex flex-col gap-2">
           <label htmlFor="word">Which word do you want to search?</label>
           <input
-            className="bg-zinc-400/20 rounded-none py-2 px-4 border"
+            className="bg-zinc-400/20 rounded-md py-2 px-4 border"
             minLength={2}
             required
             id="word"
@@ -107,11 +119,11 @@ function App() {
           />
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 mt mb-4">
           {Object.values(fetchOptions).map(({ description, key }) => (
             <div key={key} className="flex items-center">
               <input
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                className="w-4 h-4"
                 required
                 type="radio"
                 value={key}
@@ -131,39 +143,35 @@ function App() {
             </div>
           ))}
         </div>
-        <Button type="submit" disabled={isLoading}>
+        <Button type="submit" disabled={isLoading || error}>
           {isLoading ? 'Loading...' : 'Search Words'}
         </Button>
       </form>
 
-          
-      {/*
-        {error && (
-          <div>
-            {error}
-            <Button onClick={handleReset} type="button">
-              Restart
-            </Button>
-          </div>
-        )}    
-      */}
-
-      {response && response.length > 0 && (
+      {error && (
         <div>
-          <p className="text-center mb-4">
-            There are <b>{response.length}</b>{' '}
-            {response.length > 1 ? 'words' : 'word'} that{' '}
-            <b>
-              {/* {fetchedOptionDisplay.toLowerCase()} {searchedWordToDisplay} */}
-            </b>
-          </p>
-          <ul className="grid grid-cols-3 gap-x-12 text-start">
-            {response.map((res, idx) => (
+          {error}
+          <Button onClick={handleReset} type="button">
+            Restart
+          </Button>
+        </div>
+      )}
+
+      {fetchedWords && fetchedWords.length > 0 && (
+        <div>
+          <ul className="grid grid-cols-3 gap-x-12 gap-y-1 text-start">
+            {fetchedWords.map((res, idx) => (
               <li
-                className="cursor-pointer border-b max-w-full hover:border-blue-500"
+                className="cursor-pointer border-b w-fit hover:border-blue-500 px-1 pt-1 hover:text-brown-text/30"
                 key={idx}
               >
-                <button type="button" onClick={() => handleWordClick(res.word)}>{res.word}</button>
+                <button
+                  type="button"
+                  className="w-fit"
+                  onClick={() => handleWordClick(res.word)}
+                >
+                  {res.word}
+                </button>
               </li>
             ))}
           </ul>
