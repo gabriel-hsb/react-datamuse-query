@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { fetchOptions } from '../api/api';
+import { fetchOptions } from '../functions/api/api';
 import Button from '../ui/Button';
 
 const Form = ({

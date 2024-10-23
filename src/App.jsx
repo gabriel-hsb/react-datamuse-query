@@ -6,7 +6,7 @@ import WordsList from './components/wordsList.jsx';
 
 import Button from './ui/Button.jsx';
 
-import useFetchData from './api/fetchData.jsx';
+import useFetchData from './functions/api/fetchData.jsx';
 
 function App() {
   const navigate = useNavigate();
@@ -68,6 +68,8 @@ function App() {
     setSearchedWord(word);
 
     request(option, word);
+
+    window.scrollTo('0', '0')
   };
 
   const handleWordClick = (clickedWord) => {
